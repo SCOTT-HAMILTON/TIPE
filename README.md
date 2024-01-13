@@ -1,5 +1,5 @@
 # Pour lancer
 ```shell
-nix-shell shell2.nix
+nix-shell shell.nix
 run
 ```
