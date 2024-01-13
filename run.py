@@ -37,7 +37,7 @@ def calibrateScale(ch, targetForce):
     for i in range(num_samples):
         mes += ch.getVoltageRatio()
         time.sleep(ch.getDataInterval() / 1000.0)
-    gain = targetForce / (mes/num_samples-offset)
+    gain = targetForce / (mes / num_samples - offset)
     calibrated = True
 
 
@@ -56,6 +56,8 @@ def main():
     voltageRatioInput0.setDataInterval(250)
     voltageRatioInput0.setBridgeGain(Phidget22.BRIDGE_GAIN_128)
     print(f"MaxDataInterval={voltageRatioInput0.getMaxDataInterval()}")
+    print(f"DataRate={voltageRatioInput0.getDataRate()}")
+    print(f"DataInterval={voltageRatioInput0.getDataInterval()}")
     # voltageRatioInput0.setVoltageRatioChangeTrigger(0)
     # pour recevoir tout les trigger à chaque intervalle
 
