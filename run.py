@@ -80,7 +80,6 @@ def main():
                 calibrateScale(voltageRatioInput0, force)
                 print(f"gain={gain}")
             if line == "set gain":
-                print()
                 gain = float(input("entrée un gain: "))
                 calibrated = True
         except (Exception, KeyboardInterrupt):
