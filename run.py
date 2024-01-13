@@ -29,12 +29,15 @@ def tareScale(ch):
 
 def calibrateScale(ch, targetForce):
     global gain, calibrated
+    if not tared:
+        print("il faut tarer avant de calibrer...")
+        return
     num_samples = 50
     mes = 0
     for i in range(num_samples):
         mes += ch.getVoltageRatio()
         time.sleep(ch.getDataInterval() / 1000.0)
-    gain = targetForce / mes
+    gain = targetForce / (mes/num_samples-offset)
     calibrated = True
 
 
