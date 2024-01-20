@@ -17,6 +17,7 @@ def onVoltageRatioChange(self, voltageRatio):
     if calibrated and tared:
         force = (voltageRatio - offset) * gain
 
+
 def tareScale(ch):
     global offset, tared
     num_samples = 250
@@ -43,30 +44,32 @@ def calibrateScale(ch, targetForce):
     gain = targetForce / (mes / num_samples - offset)
     calibrated = True
 
+
 def runRecord(ch, durationms, output_file):
     if not calibrated or not tared:
         print("Il faut tarer et calibrer avant de faire un enregistrement.")
     start = time.time()
-    dataInterval = ch.getDataInterval()/1000.0
+    dataInterval = ch.getDataInterval() / 1000.0
     duration = durationms / 1000.0
     n = 0
-    with open(output_file, 'w') as csvfile:
+    with open(output_file, "w") as csvfile:
         writer = csv.writer(csvfile)
         while True:
             t = time.time()
-            mes = gain*(ch.getVoltageRatio()-offset)
+            mes = gain * (ch.getVoltageRatio() - offset)
             writer.writerow([t, mes])
             n += 1
-            if time.time()-start > duration:
+            if time.time() - start > duration:
                 break
-            time.sleep(dataInterval - (time.time()-t))
+            time.sleep(dataInterval - (time.time() - t))
     print(f"{n} entrées on été sauvegardées dans {output_file}.")
 
+
 def plotCsv(last_record_file):
-    data = np.genfromtxt(last_record_file, delimiter=',')
+    data = np.genfromtxt(last_record_file, delimiter=",")
     print(data)
-    time = data[:,0]
-    force = data[:,1]
+    time = data[:, 0]
+    force = data[:, 1]
     plt.close(1)
     plt.figure(1)
     plt.plot(time, force, "*-", label="force=f(t)")
@@ -75,12 +78,13 @@ def plotCsv(last_record_file):
     plt.legend()
     plt.show()
 
+
 def try_connect(ch):
     try:
         ch.openWaitForAttachment(1000)
         voltageRatioInput0.setOnVoltageRatioChangeHandler(onVoltageRatioChange)
-        voltageRatioInput0.setDataInterval(8) #125Hz
-        voltageRatioInput0.setBridgeGain(8) # GAIN x128
+        voltageRatioInput0.setDataInterval(8)  # 125Hz
+        voltageRatioInput0.setBridgeGain(8)  # GAIN x128
         print(f"MaxDataInterval={voltageRatioInput0.getMaxDataInterval()}")
         print(f"DataRate={voltageRatioInput0.getDataRate()}")
         print(f"DataInterval={voltageRatioInput0.getDataInterval()}")
@@ -91,6 +95,7 @@ def try_connect(ch):
     except PhidgetException as e:
         print(e)
         return False
+
 
 def main():
     global gain, calibrated, tared
