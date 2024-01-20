@@ -1,6 +1,8 @@
 from Phidget22.Phidget import *
 from Phidget22.Devices.VoltageRatioInput import *
 from Phidget22.PhidgetException import PhidgetException
+from matplotlib import pyplot as plt
+import numpy as np
 import time
 import csv
 
@@ -14,12 +16,10 @@ tared = False
 def onVoltageRatioChange(self, voltageRatio):
     if calibrated and tared:
         force = (voltageRatio - offset) * gain
-        print(f"Force: {force}")
-
 
 def tareScale(ch):
     global offset, tared
-    num_samples = 50
+    num_samples = 250
     dataInterval = ch.getDataInterval() / 1000.0
     for i in range(num_samples):
         offset += ch.getVoltageRatio()
@@ -34,7 +34,7 @@ def calibrateScale(ch, targetForce):
     if not tared:
         print("il faut tarer avant de calibrer...")
         return
-    num_samples = 50
+    num_samples = 250
     mes = 0
     dataInterval = ch.getDataInterval() / 1000.0
     for i in range(num_samples):
@@ -62,25 +62,43 @@ def runRecord(ch, durationms, output_file):
             time.sleep(dataInterval - (time.time()-t))
     print(f"{n} entrées on été sauvegardées dans {output_file}.")
 
-def main():
-    voltageRatioInput0 = VoltageRatioInput()
-    voltageRatioInput0.setOnVoltageRatioChangeHandler(onVoltageRatioChange)
-    while True:
-        try:
-            voltageRatioInput0.openWaitForAttachment(1000)
-        except PhidgetException as e:
-            print(e)
-            r = input("réessayer ? (o/n)")
-            if r != "o":
-                exit(1)
+def plotCsv(last_record_file):
+    data = np.genfromtxt(last_record_file, delimiter=',')
+    print(data)
+    time = data[:,0]
+    force = data[:,1]
+    plt.close(1)
+    plt.figure(1)
+    plt.plot(time, force, "*-", label="force=f(t)")
+    plt.xlabel("t (s)")
+    plt.grid()
+    plt.legend()
+    plt.show()
 
-    voltageRatioInput0.setDataInterval(250)
-    voltageRatioInput0.setBridgeGain(Phidget22.BRIDGE_GAIN_128)
-    print(f"MaxDataInterval={voltageRatioInput0.getMaxDataInterval()}")
-    print(f"DataRate={voltageRatioInput0.getDataRate()}")
-    print(f"DataInterval={voltageRatioInput0.getDataInterval()}")
-    # voltageRatioInput0.setVoltageRatioChangeTrigger(0)
-    # pour recevoir tout les trigger à chaque intervalle
+def try_connect(ch):
+    try:
+        ch.openWaitForAttachment(1000)
+        voltageRatioInput0.setOnVoltageRatioChangeHandler(onVoltageRatioChange)
+        voltageRatioInput0.setDataInterval(8) #125Hz
+        voltageRatioInput0.setBridgeGain(8) # GAIN x128
+        print(f"MaxDataInterval={voltageRatioInput0.getMaxDataInterval()}")
+        print(f"DataRate={voltageRatioInput0.getDataRate()}")
+        print(f"DataInterval={voltageRatioInput0.getDataInterval()}")
+        print(f"Gain={voltageRatioInput0.getBridgeGain()}")
+        # voltageRatioInput0.setVoltageRatioChangeTrigger(0)
+        # pour recevoir tout les trigger à chaque intervalle
+        return True
+    except PhidgetException as e:
+        print(e)
+        return False
+
+def main():
+    global gain, calibrated, tared
+    connected = False
+    voltageRatioInput0 = VoltageRatioInput()
+    connected = try_connect(voltageRatioInput0)
+
+    last_record_file = None
 
     while True:
         try:
@@ -92,10 +110,10 @@ def main():
                 input()
                 print("tare en cours...")
                 tareScale(voltageRatioInput0)
-                print("tare terminé (offset={offset}")
-            if line == "calibration":
+                print(f"tare terminé (offset={offset})")
+            if line == "calibrer":
                 print(
-                    "appliquez une force connue à la jauge de contrainte puis indiquez la valeur choisie (par exemple '123.4' pour 123,4 N):"
+                    "appliquez une force connue à la jauge de contrainte puis indiquez la valeur choisie (par exemple '123.4' pour 123,4 Kg):"
                 )
                 force = float(input())
                 calibrateScale(voltageRatioInput0, force)
@@ -107,7 +125,26 @@ def main():
                 output_file = input("entrez un nom de fichier de sauvegarde: ")
                 durationms = int(input("entrez une durée d'enregistrement en ms: "))
                 runRecord(voltageRatioInput0, durationms, output_file)
-        except (Exception, KeyboardInterrupt):
+                last_record_file = output_file
+            if line == "trace":
+                if last_record_file is None:
+                    print("impossible de tracer, aucun précédent enregistrement...")
+                else:
+                    plotCsv(last_record_file)
+            if line == "trace-fichier":
+                file = input("entrez le nom du fichier à tracer: ")
+                plotCsv(file)
+            if line == "connect":
+                while True:
+                    if not try_connect(voltageRatioInput0):
+                        r = input("réessayer ? (o/n)")
+                        if r != "o":
+                            break
+                    else:
+                        connected = True
+                        break
+        except (Exception, KeyboardInterrupt) as e:
+            print(e)
             pass
 
     voltageRatioInput0.close()
