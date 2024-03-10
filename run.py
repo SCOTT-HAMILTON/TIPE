@@ -82,14 +82,14 @@ def plotCsv(last_record_file):
 def try_connect(ch):
     try:
         ch.openWaitForAttachment(1000)
-        voltageRatioInput0.setOnVoltageRatioChangeHandler(onVoltageRatioChange)
-        voltageRatioInput0.setDataInterval(8)  # 125Hz
-        voltageRatioInput0.setBridgeGain(8)  # GAIN x128
-        print(f"MaxDataInterval={voltageRatioInput0.getMaxDataInterval()}")
-        print(f"DataRate={voltageRatioInput0.getDataRate()}")
-        print(f"DataInterval={voltageRatioInput0.getDataInterval()}")
-        print(f"Gain={voltageRatioInput0.getBridgeGain()}")
-        # voltageRatioInput0.setVoltageRatioChangeTrigger(0)
+        ch.setOnVoltageRatioChangeHandler(onVoltageRatioChange)
+        ch.setDataInterval(8)  # 125Hz
+        ch.setBridgeGain(8)  # GAIN x128
+        print(f"MaxDataInterval={ch.getMaxDataInterval()}")
+        print(f"DataRate={ch.getDataRate()}")
+        print(f"DataInterval={ch.getDataInterval()}")
+        print(f"Gain={ch.getBridgeGain()}")
+        # ch.setVoltageRatioChangeTrigger(0)
         # pour recevoir tout les trigger à chaque intervalle
         return True
     except PhidgetException as e:
